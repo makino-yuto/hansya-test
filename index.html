@@ -10,21 +10,19 @@
             padding: 0;
             height: 100vh;
             font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', Meiryo, sans-serif;
-            background-color: rgb(0, 0, 0); /* 背景をデフォルトで真っ黒に */
+            background-color: rgb(0, 0, 0);
             color: #ecf0f1;
             overflow: hidden;
             cursor: pointer;
             user-select: none;
             -webkit-user-select: none;
-            transition: background-color 0.1s; /* 背景色変更を少し滑らかに */
+            transition: background-color 0.1s;
         }
 
-        /* 文字が見えにくくならないように影をつける */
         h1, p, h2, label, li {
             text-shadow: 0 2px 4px rgba(0,0,0,0.8);
         }
 
-        /* --- 上部テキストエリア --- */
         #top-ui {
             text-align: center;
             position: absolute;
@@ -37,7 +35,6 @@
         h1 { margin: 0 0 10px 0; font-size: 2rem; }
         p { font-size: 1.2rem; margin: 0; height: 1.5em; font-weight: bold; }
 
-        /* --- 中央エリア（ボタンと結果） --- */
         #center-ui {
             position: absolute;
             top: 50%;
@@ -45,11 +42,11 @@
             transform: translate(-50%, -50%);
             text-align: center;
             z-index: 10;
-            pointer-events: none; /* コンテナ自体は貫通させる */
+            pointer-events: none;
         }
 
         button {
-            pointer-events: auto; /* ボタンは押せるように */
+            pointer-events: auto;
             padding: 15px 40px;
             font-size: 1.5rem;
             font-weight: bold;
@@ -66,51 +63,43 @@
         #result { font-size: 1.5rem; display: none; margin-bottom: 20px;}
         .score { font-size: 3.5rem; font-weight: bold; color: #f1c40f; text-shadow: 0 4px 8px rgba(0,0,0,0.9); }
 
-        /* --- 🌟 ハンバーガーボタン --- */
         #hamburger-btn {
             position: absolute;
             top: 15px;
             left: 20px;
             font-size: 2rem;
             cursor: pointer;
-            z-index: 20;
+            /* メニュー(z-index:15)より上に配置して常に押せるようにする */
+            z-index: 20; 
             pointer-events: auto;
             color: #fff;
             text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+            /* アイコンが切り替わる時に少しアニメーションをつける */
+            transition: transform 0.2s;
         }
 
-        /* --- 左側の設定メニュー（スライド式） --- */
         #settings-container {
             position: absolute;
-            left: -300px; /* 初期状態は画面外に隠す */
+            left: -300px;
             top: 0;
             height: 100vh;
             width: 250px;
             background-color: rgba(0, 0, 0, 0.85);
-            padding: 20px;
+            /* 上部のハンバーガーボタンと被らないように上の余白を多めにとる */
+            padding: 70px 20px 20px 20px;
             box-sizing: border-box;
             z-index: 15;
             pointer-events: auto; 
             cursor: default;
-            transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1); /* 滑らかにスライド */
-            overflow-y: auto; /* メニューが長い場合はスクロール可能に */
+            transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            overflow-y: auto;
             border-right: 1px solid #34495e;
         }
         
-        /* JavaScriptでこのクラスをつけるとメニューが開く */
         #settings-container.open { left: 0; }
 
-        #close-btn {
-            position: absolute;
-            top: 15px;
-            right: 20px;
-            font-size: 2rem;
-            cursor: pointer;
-            line-height: 1;
-        }
-
         #settings-container h2 {
-            margin: 40px 0 15px 0;
+            margin: 0 0 15px 0;
             font-size: 1.2rem;
             border-bottom: 1px solid #7f8c8d;
             padding-bottom: 5px;
@@ -129,7 +118,6 @@
             box-sizing: border-box; margin-top: 5px;
         }
 
-        /* --- 右側の履歴メニュー --- */
         #history-container {
             position: absolute;
             right: 20px;
@@ -147,14 +135,13 @@
         #history-list { list-style: none; padding: 0; margin: 0; font-size: 1.1rem; line-height: 1.8; font-family: monospace; }
         .warning { color: #e74c3c !important; }
 
-        /* --- ターゲットの丸 --- */
         #target-circle {
             width: 80vmin;
             height: 80vmin;
             background-color: rgb(241, 196, 15);
             border-radius: 50%;
             position: absolute;
-            top: 50%; /* 画面のド真ん中 */
+            top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
             box-shadow: 0 10px 30px rgba(0,0,0,0.5);
@@ -170,7 +157,7 @@
 
     <div id="top-ui">
         <h1>反射神経テスト</h1>
-        <p id="message">「スタート」を押して準備</p>
+        <p id="message"></p>
     </div>
 
     <div id="center-ui">
@@ -179,7 +166,6 @@
     </div>
 
     <div id="settings-container">
-        <div id="close-btn">×</div>
         <h2>カスタマイズ</h2>
         
         <div class="setting-group">
@@ -224,12 +210,9 @@
         const resultDisplay = document.getElementById('result');
         const historyList = document.getElementById('history-list');
         
-        // メニュー開閉用
         const hamburgerBtn = document.getElementById('hamburger-btn');
-        const closeBtn = document.getElementById('close-btn');
         const settingsContainer = document.getElementById('settings-container');
 
-        // 丸の設定用
         const sizeSlider = document.getElementById('size-slider');
         const sizeLabel = document.getElementById('size-label');
         const rSlider = document.getElementById('r-slider');
@@ -240,7 +223,6 @@
         const bLabel = document.getElementById('b-label');
         const colorPreview = document.getElementById('color-preview');
 
-        // 背景の設定用
         const bgRSlider = document.getElementById('bg-r-slider');
         const bgGSlider = document.getElementById('bg-g-slider');
         const bgBSlider = document.getElementById('bg-b-slider');
@@ -256,26 +238,28 @@
         let timeoutId = null;
         let currentState = 'IDLE'; 
 
-        // --- イベントリスナー ---
         startBtn.addEventListener('click', startGame);
         document.addEventListener('pointerdown', handleScreenTap);
 
-        // ハンバーガーメニューの開閉
+        // 🌟 ボタン1つで開閉（トグル）し、アイコンを切り替える処理
         hamburgerBtn.addEventListener('click', () => {
-            settingsContainer.classList.add('open');
-        });
-        closeBtn.addEventListener('click', () => {
-            settingsContainer.classList.remove('open');
+            settingsContainer.classList.toggle('open');
+            
+            if (settingsContainer.classList.contains('open')) {
+                hamburgerBtn.textContent = '×';
+                // 少し回転させて「×」にするエフェクト
+                hamburgerBtn.style.transform = 'rotate(90deg)'; 
+            } else {
+                hamburgerBtn.textContent = '☰';
+                hamburgerBtn.style.transform = 'rotate(0deg)';
+            }
         });
 
-        // スライダーの変更検知
         [sizeSlider, rSlider, gSlider, bSlider, bgRSlider, bgGSlider, bgBSlider].forEach(slider => {
             slider.addEventListener('input', updateSettings);
         });
 
-        // --- 設定の更新処理 ---
         function updateSettings() {
-            // 丸の更新
             const size = sizeSlider.value;
             sizeLabel.textContent = size;
             targetCircle.style.width = `${size}vmin`;
@@ -287,7 +271,6 @@
             colorPreview.style.backgroundColor = newColor;
             targetCircle.style.backgroundColor = newColor;
 
-            // 背景の更新
             const bgR = bgRSlider.value; const bgG = bgGSlider.value; const bgB = bgBSlider.value;
             bgRLabel.textContent = bgR; bgGLabel.textContent = bgG; bgBLabel.textContent = bgB;
             const newBgColor = `rgb(${bgR}, ${bgG}, ${bgB})`;
@@ -295,15 +278,16 @@
             document.body.style.backgroundColor = newBgColor;
         }
 
-        // --- ゲーム処理 ---
         function startGame() {
             trialCount = 0;
             reactionTimes = [];
             startBtn.style.display = 'none';
             resultDisplay.style.display = 'none';
             
-            // ゲーム開始時にメニューが開いていたら閉じる
+            // 🌟 ゲーム開始時にメニューが開いていたら閉じ、アイコンも戻す
             settingsContainer.classList.remove('open');
+            hamburgerBtn.textContent = '☰';
+            hamburgerBtn.style.transform = 'rotate(0deg)';
             
             historyList.innerHTML = '';
             for(let i = 1; i <= MAX_TRIALS; i++) {
@@ -339,7 +323,6 @@
         }
 
         function handleScreenTap(e) {
-            // ハンバーガーボタン、設定メニュー、スタートボタンのクリックはゲームのタップと見なさない
             if (e.target.id === 'start-btn' || 
                 e.target.closest('#settings-container') || 
                 e.target.id === 'hamburger-btn') {
@@ -386,7 +369,6 @@
             message.classList.remove('warning');
             message.innerHTML = 'テスト完了！';
             
-            // 結果も中央に出す
             resultDisplay.innerHTML = `平均反応速度<br><span class="score">${Math.round(average)}</span> ms`;
             resultDisplay.style.display = 'block';
             
