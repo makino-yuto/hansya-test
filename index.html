@@ -10,16 +10,22 @@
             padding: 0;
             height: 100vh;
             font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', Meiryo, sans-serif;
-            background-color: #2c3e50;
+            background-color: rgb(0, 0, 0); /* 背景をデフォルトで真っ黒に */
             color: #ecf0f1;
             overflow: hidden;
             cursor: pointer;
             user-select: none;
             -webkit-user-select: none;
+            transition: background-color 0.1s; /* 背景色変更を少し滑らかに */
         }
 
-        /* --- UI全体のコンテナ --- */
-        #ui-container {
+        /* 文字が見えにくくならないように影をつける */
+        h1, p, h2, label, li {
+            text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+        }
+
+        /* --- 上部テキストエリア --- */
+        #top-ui {
             text-align: center;
             position: absolute;
             top: 5%;
@@ -29,311 +35,94 @@
         }
 
         h1 { margin: 0 0 10px 0; font-size: 2rem; }
-        p { font-size: 1.2rem; margin: 0 0 15px 0; height: 1.5em; font-weight: bold; }
+        p { font-size: 1.2rem; margin: 0; height: 1.5em; font-weight: bold; }
+
+        /* --- 中央エリア（ボタンと結果） --- */
+        #center-ui {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            z-index: 10;
+            pointer-events: none; /* コンテナ自体は貫通させる */
+        }
 
         button {
-            pointer-events: auto;
-            padding: 15px 30px;
-            font-size: 1.2rem;
+            pointer-events: auto; /* ボタンは押せるように */
+            padding: 15px 40px;
+            font-size: 1.5rem;
             font-weight: bold;
             color: #fff;
             background-color: #3498db;
             border: none;
             border-radius: 8px;
             cursor: pointer;
-            transition: background-color 0.2s;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            transition: transform 0.1s, background-color 0.2s;
+            box-shadow: 0 6px 12px rgba(0,0,0,0.5);
         }
-        button:hover { background-color: #2980b9; }
+        button:hover { background-color: #2980b9; transform: scale(1.05); }
 
-        #result { font-size: 1.5rem; margin-top: 15px; display: none; }
-        .score { font-size: 2.5rem; font-weight: bold; color: #f1c40f; }
+        #result { font-size: 1.5rem; display: none; margin-bottom: 20px;}
+        .score { font-size: 3.5rem; font-weight: bold; color: #f1c40f; text-shadow: 0 4px 8px rgba(0,0,0,0.9); }
 
-        /* --- 【新規】左側の設定メニュー --- */
+        /* --- 🌟 ハンバーガーボタン --- */
+        #hamburger-btn {
+            position: absolute;
+            top: 15px;
+            left: 20px;
+            font-size: 2rem;
+            cursor: pointer;
+            z-index: 20;
+            pointer-events: auto;
+            color: #fff;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+        }
+
+        /* --- 左側の設定メニュー（スライド式） --- */
         #settings-container {
             position: absolute;
-            left: 20px;
-            top: 50%;
-            transform: translateY(-50%);
-            background-color: rgba(0, 0, 0, 0.6);
+            left: -300px; /* 初期状態は画面外に隠す */
+            top: 0;
+            height: 100vh;
+            width: 250px;
+            background-color: rgba(0, 0, 0, 0.85);
             padding: 20px;
-            border-radius: 8px;
-            z-index: 10;
-            /* ここはクリックして操作できるようにする */
+            box-sizing: border-box;
+            z-index: 15;
             pointer-events: auto; 
-            cursor: default; /* スライダー操作時は普通のカーソルに */
-            width: 200px;
+            cursor: default;
+            transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1); /* 滑らかにスライド */
+            overflow-y: auto; /* メニューが長い場合はスクロール可能に */
+            border-right: 1px solid #34495e;
+        }
+        
+        /* JavaScriptでこのクラスをつけるとメニューが開く */
+        #settings-container.open { left: 0; }
+
+        #close-btn {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            font-size: 2rem;
+            cursor: pointer;
+            line-height: 1;
         }
 
         #settings-container h2 {
-            margin: 0 0 15px 0;
+            margin: 40px 0 15px 0;
             font-size: 1.2rem;
             border-bottom: 1px solid #7f8c8d;
             padding-bottom: 5px;
             text-align: center;
         }
 
-        .setting-group { margin-bottom: 20px; }
+        .setting-group { margin-bottom: 25px; }
         .setting-group label { display: block; margin-bottom: 5px; font-size: 0.9rem; }
         
-        /* スライダーのデザイン */
-        input[type="range"] {
-            width: 100%;
-            cursor: pointer;
-            margin-bottom: 10px;
-        }
+        input[type="range"] { width: 100%; cursor: pointer; margin-bottom: 10px; }
 
-        /* 色のプレビュー用の小さな四角 */
-        #color-preview {
-            width: 100%;
-            height: 30px;
+        .color-preview {
+            width: 100%; height: 30px;
             border-radius: 4px;
-            background-color: rgb(241, 196, 15); /* 初期色の黄色 */
-            border: 2px solid #fff;
-            box-sizing: border-box;
-            margin-top: 5px;
-        }
-
-        /* --- 右側の履歴メニュー --- */
-        #history-container {
-            position: absolute;
-            right: 20px;
-            top: 50%;
-            transform: translateY(-50%);
-            background-color: rgba(0, 0, 0, 0.6);
-            padding: 15px;
-            border-radius: 8px;
-            z-index: 10;
-            pointer-events: none;
-            width: 150px;
-        }
-
-        #history-container h2 {
-            margin: 0 0 10px 0;
-            font-size: 1.2rem;
-            border-bottom: 1px solid #7f8c8d;
-            padding-bottom: 5px;
-            text-align: center;
-        }
-
-        #history-list {
-            list-style: none;
-            padding: 0; margin: 0;
-            font-size: 1.1rem; line-height: 1.8;
-            font-family: monospace;
-        }
-
-        .warning { color: #e74c3c !important; }
-
-        /* --- ターゲットの丸 --- */
-        #target-circle {
-            width: 80vmin; /* 初期サイズ */
-            height: 80vmin;
-            background-color: rgb(241, 196, 15); /* 初期色 */
-            border-radius: 50%;
-            position: absolute;
-            top: 55%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            display: none;
-            z-index: 5;
-            pointer-events: none;
-        }
-    </style>
-</head>
-<body>
-
-    <div id="ui-container">
-        <h1>反射神経テスト</h1>
-        <p id="message">「スタート」を押して準備</p>
-        <button id="start-btn">スタート</button>
-        <div id="result"></div>
-    </div>
-
-    <div id="settings-container">
-        <h2>カスタマイズ</h2>
-        
-        <div class="setting-group">
-            <label>丸のサイズ: <span id="size-label">80</span>%</label>
-            <input type="range" id="size-slider" min="10" max="100" value="80">
-        </div>
-
-        <div class="setting-group">
-            <label>丸の色 (RGB)</label>
-            <label style="color:#ff7675;">R (赤): <span id="r-label">241</span></label>
-            <input type="range" id="r-slider" min="0" max="255" value="241">
-            
-            <label style="color:#55efc4;">G (緑): <span id="g-label">196</span></label>
-            <input type="range" id="g-slider" min="0" max="255" value="196">
-            
-            <label style="color:#74b9ff;">B (青): <span id="b-label">15</span></label>
-            <input type="range" id="b-slider" min="0" max="255" value="15">
-            
-            <div id="color-preview"></div>
-        </div>
-    </div>
-
-    <div id="history-container">
-        <h2>タイム</h2>
-        <ul id="history-list"></ul>
-    </div>
-
-    <div id="target-circle"></div>
-
-    <script>
-        // --- 要素の取得 ---
-        const startBtn = document.getElementById('start-btn');
-        const targetCircle = document.getElementById('target-circle');
-        const message = document.getElementById('message');
-        const resultDisplay = document.getElementById('result');
-        const historyList = document.getElementById('history-list');
-        
-        // 設定用要素の取得
-        const sizeSlider = document.getElementById('size-slider');
-        const sizeLabel = document.getElementById('size-label');
-        const rSlider = document.getElementById('r-slider');
-        const gSlider = document.getElementById('g-slider');
-        const bSlider = document.getElementById('b-slider');
-        const rLabel = document.getElementById('r-label');
-        const gLabel = document.getElementById('g-label');
-        const bLabel = document.getElementById('b-label');
-        const colorPreview = document.getElementById('color-preview');
-
-        // --- ゲームの変数 ---
-        const MAX_TRIALS = 5;
-        let trialCount = 0;
-        let reactionTimes = [];
-        let startTime = 0;
-        let timeoutId = null;
-        let currentState = 'IDLE'; 
-
-        // --- イベントリスナー ---
-        startBtn.addEventListener('click', startGame);
-        document.addEventListener('pointerdown', handleScreenTap);
-
-        // 設定スライダーが動いた時の処理を一括で登録
-        [sizeSlider, rSlider, gSlider, bSlider].forEach(slider => {
-            slider.addEventListener('input', updateSettings);
-        });
-
-        // --- 設定の更新処理 ---
-        function updateSettings() {
-            // サイズの更新
-            const size = sizeSlider.value;
-            sizeLabel.textContent = size;
-            targetCircle.style.width = `${size}vmin`;
-            targetCircle.style.height = `${size}vmin`;
-
-            // 色の更新
-            const r = rSlider.value;
-            const g = gSlider.value;
-            const b = bSlider.value;
-            rLabel.textContent = r;
-            gLabel.textContent = g;
-            bLabel.textContent = b;
-            
-            const newColor = `rgb(${r}, ${g}, ${b})`;
-            colorPreview.style.backgroundColor = newColor;
-            targetCircle.style.backgroundColor = newColor;
-        }
-
-        // --- ゲームのメイン処理 ---
-        function startGame() {
-            trialCount = 0;
-            reactionTimes = [];
-            startBtn.style.display = 'none';
-            resultDisplay.style.display = 'none';
-            
-            historyList.innerHTML = '';
-            for(let i = 1; i <= MAX_TRIALS; i++) {
-                historyList.innerHTML += `<li id="trial-${i}">${i}回目: --- ms</li>`;
-            }
-
-            nextTrial();
-        }
-
-        function nextTrial() {
-            if (trialCount >= MAX_TRIALS) {
-                showResult();
-                return;
-            }
-            startCountdown();
-        }
-
-        function startCountdown() {
-            currentState = 'WAITING';
-            message.classList.remove('warning');
-            message.textContent = `第 ${trialCount + 1} 回 / 全 ${MAX_TRIALS} 回 : 準備...`;
-            
-            const randomDelay = Math.floor(Math.random() * 4000) + 3000;
-            timeoutId = setTimeout(showCircle, randomDelay);
-        }
-
-        function showCircle() {
-            if (currentState !== 'WAITING') return; 
-            
-            currentState = 'REACTING';
-            message.textContent = '今だ！！';
-            targetCircle.style.display = 'block';
-            startTime = performance.now(); 
-        }
-
-        function handleScreenTap(e) {
-            // ★重要★: スタートボタンや「左の設定メニュー」をクリックした時は、画面タップ判定を無視する！
-            if (e.target.id === 'start-btn' || e.target.closest('#settings-container')) {
-                return;
-            }
-
-            if (currentState === 'WAITING') {
-                // フライング判定
-                clearTimeout(timeoutId);
-                currentState = 'IDLE';
-                
-                message.classList.add('warning');
-                message.textContent = '早すぎます！もう一度...';
-                
-                setTimeout(() => {
-                    if (trialCount < MAX_TRIALS) {
-                        startCountdown();
-                    }
-                }, 1500);
-
-            } else if (currentState === 'REACTING') {
-                // 正常な反応
-                const endTime = performance.now();
-                const reactionTime = Math.round(endTime - startTime);
-                reactionTimes.push(reactionTime);
-                
-                targetCircle.style.display = 'none';
-                currentState = 'IDLE';
-                
-                const listItem = document.getElementById(`trial-${trialCount + 1}`);
-                if(listItem) {
-                    listItem.textContent = `${trialCount + 1}回目: ${reactionTime} ms`;
-                }
-
-                trialCount++;
-                
-                setTimeout(nextTrial, 500);
-            }
-        }
-
-        function showResult() {
-            currentState = 'IDLE';
-            targetCircle.style.display = 'none';
-            
-            const sum = reactionTimes.reduce((a, b) => a + b, 0);
-            const average = sum / MAX_TRIALS;
-            
-            message.classList.remove('warning');
-            message.innerHTML = 'テスト完了！<br>あなたの平均反応速度は...';
-            resultDisplay.innerHTML = `<span class="score">${Math.round(average)}</span> ミリ秒`;
-            resultDisplay.style.display = 'block';
-            
-            startBtn.textContent = 'もう一度プレイ';
-            startBtn.style.display = 'inline-block';
-        }
-    </script>
-</body>
-</html>
+            border: 2px
