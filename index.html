@@ -36,7 +36,7 @@
             transition: none;
         }
 
-        h1, h2, label, li {
+        h1, h2, label, li, p {
             text-shadow: 0 2px 4px rgba(0,0,0,0.8);
         }
 
@@ -106,6 +106,23 @@
 
         #result { font-size: 1.5rem; display: none; margin-bottom: 20px;}
         .score { font-size: 3.5rem; font-weight: bold; color: #f1c40f; text-shadow: 0 4px 8px rgba(0,0,0,0.9); }
+
+        /* --- 🌟 画面下部の説明テキスト --- */
+        #bottom-ui {
+            position: absolute;
+            bottom: 10%;
+            width: 100%;
+            text-align: center;
+            pointer-events: none;
+            z-index: 10;
+        }
+        #instruction-text {
+            font-size: 1.1rem;
+            color: #bdc3c7; /* 少し控えめな色 */
+            margin: 0;
+            font-weight: normal;
+            letter-spacing: 0.05em;
+        }
 
         #hamburger-btn {
             position: absolute;
@@ -181,8 +198,7 @@
             background-color: rgb(241, 196, 15);
             border-radius: 50%;
             position: absolute;
-            /* 🌟 ボタンと被らないように少し下に下げました */
-            top: 57.5%;
+            top: 60%;
             left: 50%;
             transform: translate(-50%, -50%);
             box-shadow: 0 10px 30px rgba(0,0,0,0.5);
@@ -207,6 +223,10 @@
     <div id="center-ui">
         <div id="result"></div>
         <button id="start-btn">スタート</button>
+    </div>
+
+    <div id="bottom-ui">
+        <p id="instruction-text">円が出たら画面をクリック</p>
     </div>
 
     <div id="settings-container">
@@ -252,6 +272,7 @@
         const targetCircle = document.getElementById('target-circle');
         const resultDisplay = document.getElementById('result');
         const historyList = document.getElementById('history-list');
+        const instructionText = document.getElementById('instruction-text'); // 🌟 追加
         
         const hamburgerBtn = document.getElementById('hamburger-btn');
         const settingsContainer = document.getElementById('settings-container');
@@ -286,7 +307,7 @@
         let currentMode = 'VISUAL'; 
 
         let audioCtx;
-        let cueOscillator = null; // 🌟 鳴り続ける音を管理する変数
+        let cueOscillator = null; 
 
         function initAudio() {
             if (!audioCtx) {
@@ -297,7 +318,6 @@
             }
         }
 
-        // --- 🌟 聴覚モードの合図音（連続した「ピーーーー」） ---
         function playCueSound() {
             if (!audioCtx) return;
             cueOscillator = audioCtx.createOscillator();
@@ -312,10 +332,8 @@
             gainNode.connect(audioCtx.destination);
             
             cueOscillator.start();
-            // stop()を指定しないことで、タップされるまで鳴り続けます
         }
 
-        // --- 🌟 音をピタッと止める関数 ---
         function stopCueSound() {
             if (cueOscillator) {
                 cueOscillator.stop();
@@ -324,7 +342,6 @@
             }
         }
 
-        // --- フライング時のエラー音（低く小さな「ボッ」） ---
         function playErrorSound() {
             if (!audioCtx) return;
             const oscillator = audioCtx.createOscillator();
@@ -353,8 +370,15 @@
             visualModeBtn.classList.toggle('active', mode === 'VISUAL');
             audioModeBtn.classList.toggle('active', mode === 'AUDIO');
             
+            // 🌟 モードに合わせて説明文を切り替え
+            if (mode === 'VISUAL') {
+                instructionText.textContent = '円が出たら画面をクリック';
+            } else {
+                instructionText.textContent = '音が鳴ったら画面をクリック';
+            }
+            
             clearTimeout(timeoutId);
-            stopCueSound(); // モード切替時に音が鳴っていたら止める
+            stopCueSound();
             currentState = 'IDLE';
             trialCount = 0;
             reactionTimes = [];
@@ -408,7 +432,7 @@
             reactionTimes = [];
             startBtn.style.display = 'none';
             resultDisplay.style.display = 'none';
-            targetCircle.style.display = 'none'; // 🌟 聴覚モードの出しっぱなしを廃止
+            targetCircle.style.display = 'none'; 
             
             settingsContainer.classList.remove('open');
             hamburgerBtn.textContent = '☰';
@@ -480,7 +504,6 @@
                 }, 80); 
 
             } else if (currentState === 'REACTING') {
-                // 🌟 タップした瞬間に「ピーーーー」を止める
                 stopCueSound();
 
                 const endTime = performance.now();
@@ -506,7 +529,7 @@
         function showResult() {
             currentState = 'IDLE';
             targetCircle.style.display = 'none'; 
-            stopCueSound(); // 念のため終了時にも音を止める
+            stopCueSound(); 
             
             const sum = reactionTimes.reduce((a, b) => a + b, 0);
             const average = sum / MAX_TRIALS;
@@ -520,6 +543,3 @@
     </script>
 </body>
 </html>
-
-
-
