@@ -69,12 +69,10 @@
             left: 20px;
             font-size: 2rem;
             cursor: pointer;
-            /* メニュー(z-index:15)より上に配置して常に押せるようにする */
             z-index: 20; 
             pointer-events: auto;
             color: #fff;
             text-shadow: 0 2px 4px rgba(0,0,0,0.8);
-            /* アイコンが切り替わる時に少しアニメーションをつける */
             transition: transform 0.2s;
         }
 
@@ -85,7 +83,6 @@
             height: 100vh;
             width: 250px;
             background-color: rgba(0, 0, 0, 0.85);
-            /* 上部のハンバーガーボタンと被らないように上の余白を多めにとる */
             padding: 70px 20px 20px 20px;
             box-sizing: border-box;
             z-index: 15;
@@ -241,13 +238,10 @@
         startBtn.addEventListener('click', startGame);
         document.addEventListener('pointerdown', handleScreenTap);
 
-        // 🌟 ボタン1つで開閉（トグル）し、アイコンを切り替える処理
         hamburgerBtn.addEventListener('click', () => {
             settingsContainer.classList.toggle('open');
-            
             if (settingsContainer.classList.contains('open')) {
                 hamburgerBtn.textContent = '×';
-                // 少し回転させて「×」にするエフェクト
                 hamburgerBtn.style.transform = 'rotate(90deg)'; 
             } else {
                 hamburgerBtn.textContent = '☰';
@@ -284,7 +278,6 @@
             startBtn.style.display = 'none';
             resultDisplay.style.display = 'none';
             
-            // 🌟 ゲーム開始時にメニューが開いていたら閉じ、アイコンも戻す
             settingsContainer.classList.remove('open');
             hamburgerBtn.textContent = '☰';
             hamburgerBtn.style.transform = 'rotate(0deg)';
@@ -307,7 +300,8 @@
         function startCountdown() {
             currentState = 'WAITING';
             message.classList.remove('warning');
-            message.innerHTML = `第 ${trialCount + 1} 回 / 全 ${MAX_TRIALS} 回 : 準備...<br><span style="font-size:0.9rem; font-weight:normal;">(画面のどこをタッチしてもOK)</span>`;
+            // 🌟 無駄な説明テキストを削ぎ落とし、超シンプルに
+            message.textContent = `第 ${trialCount + 1} 回 / 全 ${MAX_TRIALS} 回 : 準備...`;
             
             const randomDelay = Math.floor(Math.random() * 4000) + 3000;
             timeoutId = setTimeout(showCircle, randomDelay);
@@ -317,7 +311,8 @@
             if (currentState !== 'WAITING') return; 
             
             currentState = 'REACTING';
-            message.textContent = '今だ！！';
+            // 🌟 丸が出た瞬間は文字を空っぽにして、視覚的集中力を高める
+            message.textContent = '';
             targetCircle.style.display = 'block';
             startTime = performance.now(); 
         }
@@ -367,7 +362,7 @@
             const average = sum / MAX_TRIALS;
             
             message.classList.remove('warning');
-            message.innerHTML = 'テスト完了！';
+            message.textContent = 'テスト完了！';
             
             resultDisplay.innerHTML = `平均反応速度<br><span class="score">${Math.round(average)}</span> ms`;
             resultDisplay.style.display = 'block';
