@@ -259,19 +259,17 @@
             }
         }
 
-        // 🌟 控えめな音に変更
+        // 🌟 採用いただいた、はっきりした「ぶっ」というブザー音
         function playErrorSound() {
             if (!audioCtx) return;
             const oscillator = audioCtx.createOscillator();
             const gainNode = audioCtx.createGain();
             
-            // 波形を「sine（サイン波）」にして耳障りな電子音感を無くす
-            oscillator.type = 'sine';
+            oscillator.type = 'square';
             oscillator.frequency.setValueAtTime(100, audioCtx.currentTime);
             
-            // 音量を激減（0.3 → 0.05）させ、非常に小さな「ボッ」という音にする
-            gainNode.gain.setValueAtTime(0.05, audioCtx.currentTime);
-            gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.1);
+            gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
             
             oscillator.connect(gainNode);
             gainNode.connect(audioCtx.destination);
