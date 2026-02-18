@@ -51,13 +51,13 @@
 
         h1 { margin: 0; font-size: 2rem; }
 
-        /* --- 🌟 視覚・聴覚の切り替えスイッチ --- */
+        /* --- 視覚・聴覚の切り替えスイッチ --- */
         #mode-switch {
             display: flex;
             justify-content: center;
             gap: 15px;
             margin-top: 15px;
-            pointer-events: auto; /* ここはクリックできるように */
+            pointer-events: auto;
         }
         .mode-btn {
             padding: 8px 24px;
@@ -181,7 +181,8 @@
             background-color: rgb(241, 196, 15);
             border-radius: 50%;
             position: absolute;
-            top: 50%;
+            /* 🌟 ボタンと被らないように少し下に下げました */
+            top: 60%;
             left: 50%;
             transform: translate(-50%, -50%);
             box-shadow: 0 10px 30px rgba(0,0,0,0.5);
@@ -282,9 +283,10 @@
         let startTime = 0;
         let timeoutId = null;
         let currentState = 'IDLE'; 
-        let currentMode = 'VISUAL'; // 🌟 モード管理: 'VISUAL' または 'AUDIO'
+        let currentMode = 'VISUAL'; 
 
         let audioCtx;
+        let cueOscillator = null; // 🌟 鳴り続ける音を管理する変数
 
         function initAudio() {
             if (!audioCtx) {
@@ -295,23 +297,31 @@
             }
         }
 
-        // --- 🌟 聴覚モードの合図音（高く澄んだ「ピッ」という音） ---
+        // --- 🌟 聴覚モードの合図音（連続した「ピーーーー」） ---
         function playCueSound() {
             if (!audioCtx) return;
-            const oscillator = audioCtx.createOscillator();
+            cueOscillator = audioCtx.createOscillator();
             const gainNode = audioCtx.createGain();
             
-            oscillator.type = 'sine';
-            oscillator.frequency.setValueAtTime(880, audioCtx.currentTime); // 880Hz（高音）
+            cueOscillator.type = 'sine';
+            cueOscillator.frequency.setValueAtTime(880, audioCtx.currentTime); 
             
             gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
-            gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.1);
             
-            oscillator.connect(gainNode);
+            cueOscillator.connect(gainNode);
             gainNode.connect(audioCtx.destination);
             
-            oscillator.start();
-            oscillator.stop(audioCtx.currentTime + 0.1); 
+            cueOscillator.start();
+            // stop()を指定しないことで、タップされるまで鳴り続けます
+        }
+
+        // --- 🌟 音をピタッと止める関数 ---
+        function stopCueSound() {
+            if (cueOscillator) {
+                cueOscillator.stop();
+                cueOscillator.disconnect();
+                cueOscillator = null;
+            }
         }
 
         // --- フライング時のエラー音（低く小さな「ボッ」） ---
@@ -333,7 +343,6 @@
             oscillator.stop(audioCtx.currentTime + 0.1); 
         }
 
-        // --- 🌟 モード切り替えの処理 ---
         visualModeBtn.addEventListener('click', () => setMode('VISUAL'));
         audioModeBtn.addEventListener('click', () => setMode('AUDIO'));
 
@@ -344,8 +353,8 @@
             visualModeBtn.classList.toggle('active', mode === 'VISUAL');
             audioModeBtn.classList.toggle('active', mode === 'AUDIO');
             
-            // 切り替えたらゲームを強制リセットして初期状態に戻す
             clearTimeout(timeoutId);
+            stopCueSound(); // モード切替時に音が鳴っていたら止める
             currentState = 'IDLE';
             trialCount = 0;
             reactionTimes = [];
@@ -354,7 +363,6 @@
             targetCircle.style.display = 'none';
             historyList.innerHTML = '';
         }
-
 
         startBtn.addEventListener('click', startGame);
         document.addEventListener('pointerdown', handleScreenTap);
@@ -400,6 +408,7 @@
             reactionTimes = [];
             startBtn.style.display = 'none';
             resultDisplay.style.display = 'none';
+            targetCircle.style.display = 'none'; // 🌟 聴覚モードの出しっぱなしを廃止
             
             settingsContainer.classList.remove('open');
             hamburgerBtn.textContent = '☰';
@@ -408,11 +417,6 @@
             historyList.innerHTML = '';
             for(let i = 1; i <= MAX_TRIALS; i++) {
                 historyList.innerHTML += `<li id="trial-${i}">${i}回目: --- ms</li>`;
-            }
-
-            // 🌟 聴覚モードの場合は、スタート直後から丸をボタンとして出しっぱなしにする
-            if (currentMode === 'AUDIO') {
-                targetCircle.style.display = 'block';
             }
 
             nextTrial();
@@ -430,7 +434,6 @@
             currentState = 'WAITING';
             const randomDelay = Math.floor(Math.random() * 4000) + 3000;
             
-            // 🌟 モードによってタイマーの実行内容を変える
             if (currentMode === 'VISUAL') {
                 timeoutId = setTimeout(showCircle, randomDelay);
             } else {
@@ -448,14 +451,13 @@
         function playCue() {
             if (currentState !== 'WAITING') return; 
             currentState = 'REACTING';
-            playCueSound(); // 🌟 「ピッ」と鳴らす（丸は出たまま）
+            playCueSound(); 
             startTime = performance.now(); 
         }
 
         function handleScreenTap(e) {
             initAudio(); 
 
-            // 🌟 モード切替ボタンの上では反応しないようにブロック
             if (e.target.id === 'start-btn' || 
                 e.target.closest('#settings-container') || 
                 e.target.id === 'hamburger-btn' ||
@@ -478,11 +480,13 @@
                 }, 80); 
 
             } else if (currentState === 'REACTING') {
+                // 🌟 タップした瞬間に「ピーーーー」を止める
+                stopCueSound();
+
                 const endTime = performance.now();
                 const reactionTime = Math.round(endTime - startTime);
                 reactionTimes.push(reactionTime);
                 
-                // 🌟 視覚モードの時だけ丸を隠す（聴覚モードは出しっぱなし）
                 if (currentMode === 'VISUAL') {
                     targetCircle.style.display = 'none';
                 }
@@ -501,7 +505,8 @@
 
         function showResult() {
             currentState = 'IDLE';
-            targetCircle.style.display = 'none'; // どちらのモードでも最後は消す
+            targetCircle.style.display = 'none'; 
+            stopCueSound(); // 念のため終了時にも音を止める
             
             const sum = reactionTimes.reduce((a, b) => a + b, 0);
             const average = sum / MAX_TRIALS;
