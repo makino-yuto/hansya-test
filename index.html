@@ -19,10 +19,35 @@
             transition: background-color 0.1s;
         }
 
-        /* フライング時の赤いフラッシュ効果（文字なしでエラーを伝えるため） */
-        .flash-error {
-            background-color: #c0392b !important;
-            transition: none !important; /* 一瞬で赤くする */
+        /* --- フライング時のエラー表現（薄い赤 ＋ 画面シェイク） --- */
+        @keyframes shake {
+            0% { transform: translateX(0); }
+            20% { transform: translateX(-8px); }
+            40% { transform: translateX(8px); }
+            60% { transform: translateX(-8px); }
+            80% { transform: translateX(8px); }
+            100% { transform: translateX(0); }
+        }
+
+        body.flash-error {
+            animation: shake 0.2s ease-in-out;
+        }
+
+        /* ユーザーが設定した背景色を壊さないよう、上から薄い赤い膜を被せる */
+        body::after {
+            content: "";
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(255, 0, 0, 0.15); /* ほんのり赤いだけ */
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s ease;
+            z-index: 100;
+        }
+
+        body.flash-error::after {
+            opacity: 1;
+            transition: none; /* エラー時は一瞬で赤くする */
         }
 
         h1, h2, label, li {
@@ -321,7 +346,7 @@
             }
 
             if (currentState === 'WAITING') {
-                // フライング処理：文字は出さず、画面を一瞬赤くフラッシュさせる
+                // フライング処理：ブルッと画面を揺らし、ごく僅かに赤みを帯びる
                 clearTimeout(timeoutId);
                 currentState = 'IDLE';
                 
@@ -330,10 +355,9 @@
                 setTimeout(() => {
                     document.body.classList.remove('flash-error');
                     if (trialCount < MAX_TRIALS) {
-                        // フラッシュ後、少しだけ間を空けて静かにカウントダウン再開
                         setTimeout(startCountdown, 500);
                     }
-                }, 200); // 0.2秒だけ赤く光る
+                }, 200); 
 
             } else if (currentState === 'REACTING') {
                 const endTime = performance.now();
