@@ -51,6 +51,34 @@
 
         h1 { margin: 0; font-size: 2rem; }
 
+        /* --- 🌟 視覚・聴覚の切り替えスイッチ --- */
+        #mode-switch {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 15px;
+            pointer-events: auto; /* ここはクリックできるように */
+        }
+        .mode-btn {
+            padding: 8px 24px;
+            background-color: transparent;
+            color: #7f8c8d;
+            border: 2px solid #7f8c8d;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: bold;
+            transition: all 0.2s;
+            outline: none;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.5);
+        }
+        .mode-btn.active {
+            background-color: #f1c40f;
+            color: #2c3e50;
+            border-color: #f1c40f;
+            text-shadow: none;
+        }
+
         #center-ui {
             position: absolute;
             top: 50%;
@@ -61,7 +89,7 @@
             pointer-events: none;
         }
 
-        button {
+        #start-btn {
             pointer-events: auto;
             padding: 15px 40px;
             font-size: 1.5rem;
@@ -74,7 +102,7 @@
             transition: transform 0.1s, background-color 0.2s;
             box-shadow: 0 6px 12px rgba(0,0,0,0.5);
         }
-        button:hover { background-color: #2980b9; transform: scale(1.05); }
+        #start-btn:hover { background-color: #2980b9; transform: scale(1.05); }
 
         #result { font-size: 1.5rem; display: none; margin-bottom: 20px;}
         .score { font-size: 3.5rem; font-weight: bold; color: #f1c40f; text-shadow: 0 4px 8px rgba(0,0,0,0.9); }
@@ -169,6 +197,10 @@
 
     <div id="top-ui">
         <h1>反射神経テスト</h1>
+        <div id="mode-switch">
+            <button id="visual-mode-btn" class="mode-btn active">視覚</button>
+            <button id="audio-mode-btn" class="mode-btn">聴覚</button>
+        </div>
     </div>
 
     <div id="center-ui">
@@ -223,6 +255,9 @@
         const hamburgerBtn = document.getElementById('hamburger-btn');
         const settingsContainer = document.getElementById('settings-container');
 
+        const visualModeBtn = document.getElementById('visual-mode-btn');
+        const audioModeBtn = document.getElementById('audio-mode-btn');
+
         const sizeSlider = document.getElementById('size-slider');
         const sizeLabel = document.getElementById('size-label');
         const rSlider = document.getElementById('r-slider');
@@ -247,6 +282,7 @@
         let startTime = 0;
         let timeoutId = null;
         let currentState = 'IDLE'; 
+        let currentMode = 'VISUAL'; // 🌟 モード管理: 'VISUAL' または 'AUDIO'
 
         let audioCtx;
 
@@ -259,17 +295,16 @@
             }
         }
 
-        // 🌟 音質はブザー（square）のまま、音量だけを大幅に下げました
-        function playErrorSound() {
+        // --- 🌟 聴覚モードの合図音（高く澄んだ「ピッ」という音） ---
+        function playCueSound() {
             if (!audioCtx) return;
             const oscillator = audioCtx.createOscillator();
             const gainNode = audioCtx.createGain();
             
-            oscillator.type = 'square';
-            oscillator.frequency.setValueAtTime(100, audioCtx.currentTime);
+            oscillator.type = 'sine';
+            oscillator.frequency.setValueAtTime(880, audioCtx.currentTime); // 880Hz（高音）
             
-            // 🌟 音量: 0.3 から 0.05 に変更
-            gainNode.gain.setValueAtTime(0.02, audioCtx.currentTime);
+            gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
             gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.1);
             
             oscillator.connect(gainNode);
@@ -278,6 +313,48 @@
             oscillator.start();
             oscillator.stop(audioCtx.currentTime + 0.1); 
         }
+
+        // --- フライング時のエラー音（低く小さな「ボッ」） ---
+        function playErrorSound() {
+            if (!audioCtx) return;
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            
+            oscillator.type = 'square';
+            oscillator.frequency.setValueAtTime(100, audioCtx.currentTime);
+            
+            gainNode.gain.setValueAtTime(0.025, audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.1);
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            
+            oscillator.start();
+            oscillator.stop(audioCtx.currentTime + 0.1); 
+        }
+
+        // --- 🌟 モード切り替えの処理 ---
+        visualModeBtn.addEventListener('click', () => setMode('VISUAL'));
+        audioModeBtn.addEventListener('click', () => setMode('AUDIO'));
+
+        function setMode(mode) {
+            if (currentMode === mode) return;
+            currentMode = mode;
+            
+            visualModeBtn.classList.toggle('active', mode === 'VISUAL');
+            audioModeBtn.classList.toggle('active', mode === 'AUDIO');
+            
+            // 切り替えたらゲームを強制リセットして初期状態に戻す
+            clearTimeout(timeoutId);
+            currentState = 'IDLE';
+            trialCount = 0;
+            reactionTimes = [];
+            startBtn.style.display = 'inline-block';
+            resultDisplay.style.display = 'none';
+            targetCircle.style.display = 'none';
+            historyList.innerHTML = '';
+        }
+
 
         startBtn.addEventListener('click', startGame);
         document.addEventListener('pointerdown', handleScreenTap);
@@ -332,6 +409,12 @@
             for(let i = 1; i <= MAX_TRIALS; i++) {
                 historyList.innerHTML += `<li id="trial-${i}">${i}回目: --- ms</li>`;
             }
+
+            // 🌟 聴覚モードの場合は、スタート直後から丸をボタンとして出しっぱなしにする
+            if (currentMode === 'AUDIO') {
+                targetCircle.style.display = 'block';
+            }
+
             nextTrial();
         }
 
@@ -346,23 +429,37 @@
         function startCountdown() {
             currentState = 'WAITING';
             const randomDelay = Math.floor(Math.random() * 4000) + 3000;
-            timeoutId = setTimeout(showCircle, randomDelay);
+            
+            // 🌟 モードによってタイマーの実行内容を変える
+            if (currentMode === 'VISUAL') {
+                timeoutId = setTimeout(showCircle, randomDelay);
+            } else {
+                timeoutId = setTimeout(playCue, randomDelay);
+            }
         }
 
         function showCircle() {
             if (currentState !== 'WAITING') return; 
-            
             currentState = 'REACTING';
             targetCircle.style.display = 'block';
+            startTime = performance.now(); 
+        }
+
+        function playCue() {
+            if (currentState !== 'WAITING') return; 
+            currentState = 'REACTING';
+            playCueSound(); // 🌟 「ピッ」と鳴らす（丸は出たまま）
             startTime = performance.now(); 
         }
 
         function handleScreenTap(e) {
             initAudio(); 
 
+            // 🌟 モード切替ボタンの上では反応しないようにブロック
             if (e.target.id === 'start-btn' || 
                 e.target.closest('#settings-container') || 
-                e.target.id === 'hamburger-btn') {
+                e.target.id === 'hamburger-btn' ||
+                e.target.closest('#mode-switch')) {
                 return;
             }
 
@@ -385,7 +482,11 @@
                 const reactionTime = Math.round(endTime - startTime);
                 reactionTimes.push(reactionTime);
                 
-                targetCircle.style.display = 'none';
+                // 🌟 視覚モードの時だけ丸を隠す（聴覚モードは出しっぱなし）
+                if (currentMode === 'VISUAL') {
+                    targetCircle.style.display = 'none';
+                }
+                
                 currentState = 'IDLE';
                 
                 const listItem = document.getElementById(`trial-${trialCount + 1}`);
@@ -400,7 +501,7 @@
 
         function showResult() {
             currentState = 'IDLE';
-            targetCircle.style.display = 'none';
+            targetCircle.style.display = 'none'; // どちらのモードでも最後は消す
             
             const sum = reactionTimes.reduce((a, b) => a + b, 0);
             const average = sum / MAX_TRIALS;
@@ -414,4 +515,3 @@
     </script>
 </body>
 </html>
-
