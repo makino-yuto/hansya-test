@@ -259,7 +259,7 @@
             }
         }
 
-        // 🌟 採用いただいた、はっきりした「ぶっ」というブザー音
+        // 🌟 音質はブザー（square）のまま、音量だけを大幅に下げました
         function playErrorSound() {
             if (!audioCtx) return;
             const oscillator = audioCtx.createOscillator();
@@ -268,8 +268,9 @@
             oscillator.type = 'square';
             oscillator.frequency.setValueAtTime(100, audioCtx.currentTime);
             
-            gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
-            gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+            // 🌟 音量: 0.3 から 0.05 に変更
+            gainNode.gain.setValueAtTime(0.05, audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.1);
             
             oscillator.connect(gainNode);
             gainNode.connect(audioCtx.destination);
