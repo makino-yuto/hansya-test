@@ -19,35 +19,21 @@
             transition: background-color 0.1s;
         }
 
-        /* --- フライング時のエラー表現（薄い赤 ＋ 画面シェイク） --- */
-        @keyframes shake {
-            0% { transform: translateX(0); }
-            20% { transform: translateX(-8px); }
-            40% { transform: translateX(8px); }
-            60% { transform: translateX(-8px); }
-            80% { transform: translateX(8px); }
-            100% { transform: translateX(0); }
-        }
-
-        body.flash-error {
-            animation: shake 0.2s ease-in-out;
-        }
-
-        /* ユーザーが設定した背景色を壊さないよう、上から薄い赤い膜を被せる */
+        /* --- 究極に短いフライング時のエラー表現 --- */
         body::after {
             content: "";
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
-            background-color: rgba(255, 0, 0, 0.15); /* ほんのり赤いだけ */
+            background-color: rgba(255, 0, 0, 0.4);
             opacity: 0;
             pointer-events: none;
-            transition: opacity 0.2s ease;
+            transition: opacity 0.1s ease-out;
             z-index: 100;
         }
 
         body.flash-error::after {
             opacity: 1;
-            transition: none; /* エラー時は一瞬で赤くする */
+            transition: none;
         }
 
         h1, h2, label, li {
@@ -262,6 +248,40 @@
         let timeoutId = null;
         let currentState = 'IDLE'; 
 
+        // 🌟 音声用のコンテキストを準備
+        let audioCtx;
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            // ブラウザの仕様で、ユーザー操作時にresumeしないと音が鳴らないことがあるため
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        // 🌟 「ぶっ」という音を生成して鳴らす関数
+        function playErrorSound() {
+            if (!audioCtx) return;
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            
+            // 波形を「square（矩形波）」にして、低めの周波数（100Hz）にすると「ぶっ」というブザー音になります
+            oscillator.type = 'square';
+            oscillator.frequency.setValueAtTime(100, audioCtx.currentTime);
+            
+            // 音量調整（一瞬で消えるように）
+            gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            
+            oscillator.start();
+            oscillator.stop(audioCtx.currentTime + 0.1); // 0.1秒で音を止める
+        }
+
         startBtn.addEventListener('click', startGame);
         document.addEventListener('pointerdown', handleScreenTap);
 
@@ -300,6 +320,8 @@
         }
 
         function startGame() {
+            initAudio(); // 🌟 ゲーム開始時にオーディオを有効化
+
             trialCount = 0;
             reactionTimes = [];
             startBtn.style.display = 'none';
@@ -339,6 +361,8 @@
         }
 
         function handleScreenTap(e) {
+            initAudio(); // 🌟 念のためタップ時にもオーディオコンテキストを有効化
+
             if (e.target.id === 'start-btn' || 
                 e.target.closest('#settings-container') || 
                 e.target.id === 'hamburger-btn') {
@@ -346,18 +370,19 @@
             }
 
             if (currentState === 'WAITING') {
-                // フライング処理：ブルッと画面を揺らし、ごく僅かに赤みを帯びる
+                // 🌟 フライング処理：一瞬赤く光り、「ぶっ」と鳴らす
                 clearTimeout(timeoutId);
                 currentState = 'IDLE';
                 
-                document.body.classList.add('flash-error');
+                playErrorSound(); // 音を鳴らす
+                document.body.classList.add('flash-error'); // 赤く光らせる
                 
                 setTimeout(() => {
                     document.body.classList.remove('flash-error');
                     if (trialCount < MAX_TRIALS) {
-                        setTimeout(startCountdown, 500);
+                        setTimeout(startCountdown, 200); 
                     }
-                }, 200); 
+                }, 80); 
 
             } else if (currentState === 'REACTING') {
                 const endTime = performance.now();
