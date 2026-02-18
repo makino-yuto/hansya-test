@@ -269,7 +269,7 @@
             oscillator.frequency.setValueAtTime(100, audioCtx.currentTime);
             
             // 🌟 音量: 0.3 から 0.05 に変更
-            gainNode.gain.setValueAtTime(0.05, audioCtx.currentTime);
+            gainNode.gain.setValueAtTime(0.02, audioCtx.currentTime);
             gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.1);
             
             oscillator.connect(gainNode);
@@ -414,3 +414,4 @@
     </script>
 </body>
 </html>
+
