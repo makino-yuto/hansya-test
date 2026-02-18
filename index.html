@@ -19,7 +19,13 @@
             transition: background-color 0.1s;
         }
 
-        h1, p, h2, label, li {
+        /* フライング時の赤いフラッシュ効果（文字なしでエラーを伝えるため） */
+        .flash-error {
+            background-color: #c0392b !important;
+            transition: none !important; /* 一瞬で赤くする */
+        }
+
+        h1, h2, label, li {
             text-shadow: 0 2px 4px rgba(0,0,0,0.8);
         }
 
@@ -32,8 +38,7 @@
             pointer-events: none;
         }
 
-        h1 { margin: 0 0 10px 0; font-size: 2rem; }
-        p { font-size: 1.2rem; margin: 0; height: 1.5em; font-weight: bold; }
+        h1 { margin: 0; font-size: 2rem; }
 
         #center-ui {
             position: absolute;
@@ -130,7 +135,6 @@
 
         #history-container h2 { margin: 0 0 10px 0; font-size: 1.2rem; border-bottom: 1px solid #7f8c8d; padding-bottom: 5px; text-align: center; }
         #history-list { list-style: none; padding: 0; margin: 0; font-size: 1.1rem; line-height: 1.8; font-family: monospace; }
-        .warning { color: #e74c3c !important; }
 
         #target-circle {
             width: 80vmin;
@@ -154,7 +158,6 @@
 
     <div id="top-ui">
         <h1>反射神経テスト</h1>
-        <p id="message"></p>
     </div>
 
     <div id="center-ui">
@@ -203,7 +206,6 @@
     <script>
         const startBtn = document.getElementById('start-btn');
         const targetCircle = document.getElementById('target-circle');
-        const message = document.getElementById('message');
         const resultDisplay = document.getElementById('result');
         const historyList = document.getElementById('history-list');
         
@@ -299,10 +301,6 @@
 
         function startCountdown() {
             currentState = 'WAITING';
-            message.classList.remove('warning');
-            // 🌟 無駄な説明テキストを削ぎ落とし、超シンプルに
-            message.textContent = `第 ${trialCount + 1} 回 / 全 ${MAX_TRIALS} 回 : 準備...`;
-            
             const randomDelay = Math.floor(Math.random() * 4000) + 3000;
             timeoutId = setTimeout(showCircle, randomDelay);
         }
@@ -311,8 +309,6 @@
             if (currentState !== 'WAITING') return; 
             
             currentState = 'REACTING';
-            // 🌟 丸が出た瞬間は文字を空っぽにして、視覚的集中力を高める
-            message.textContent = '';
             targetCircle.style.display = 'block';
             startTime = performance.now(); 
         }
@@ -325,16 +321,19 @@
             }
 
             if (currentState === 'WAITING') {
+                // フライング処理：文字は出さず、画面を一瞬赤くフラッシュさせる
                 clearTimeout(timeoutId);
                 currentState = 'IDLE';
-                message.classList.add('warning');
-                message.textContent = '早すぎます！もう一度...';
+                
+                document.body.classList.add('flash-error');
                 
                 setTimeout(() => {
+                    document.body.classList.remove('flash-error');
                     if (trialCount < MAX_TRIALS) {
-                        startCountdown();
+                        // フラッシュ後、少しだけ間を空けて静かにカウントダウン再開
+                        setTimeout(startCountdown, 500);
                     }
-                }, 1500);
+                }, 200); // 0.2秒だけ赤く光る
 
             } else if (currentState === 'REACTING') {
                 const endTime = performance.now();
@@ -360,9 +359,6 @@
             
             const sum = reactionTimes.reduce((a, b) => a + b, 0);
             const average = sum / MAX_TRIALS;
-            
-            message.classList.remove('warning');
-            message.textContent = 'テスト完了！';
             
             resultDisplay.innerHTML = `平均反応速度<br><span class="score">${Math.round(average)}</span> ms`;
             resultDisplay.style.display = 'block';
