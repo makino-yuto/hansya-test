@@ -125,4 +125,274 @@
         .color-preview {
             width: 100%; height: 30px;
             border-radius: 4px;
-            border: 2px
+            border: 2px solid #fff;
+            box-sizing: border-box; margin-top: 5px;
+        }
+
+        /* --- 右側の履歴メニュー --- */
+        #history-container {
+            position: absolute;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            background-color: rgba(0, 0, 0, 0.6);
+            padding: 15px;
+            border-radius: 8px;
+            z-index: 10;
+            pointer-events: none;
+            width: 150px;
+        }
+
+        #history-container h2 { margin: 0 0 10px 0; font-size: 1.2rem; border-bottom: 1px solid #7f8c8d; padding-bottom: 5px; text-align: center; }
+        #history-list { list-style: none; padding: 0; margin: 0; font-size: 1.1rem; line-height: 1.8; font-family: monospace; }
+        .warning { color: #e74c3c !important; }
+
+        /* --- ターゲットの丸 --- */
+        #target-circle {
+            width: 80vmin;
+            height: 80vmin;
+            background-color: rgb(241, 196, 15);
+            border-radius: 50%;
+            position: absolute;
+            top: 50%; /* 画面のド真ん中 */
+            left: 50%;
+            transform: translate(-50%, -50%);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            display: none;
+            z-index: 5;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="hamburger-btn">☰</div>
+
+    <div id="top-ui">
+        <h1>反射神経テスト</h1>
+        <p id="message">「スタート」を押して準備</p>
+    </div>
+
+    <div id="center-ui">
+        <div id="result"></div>
+        <button id="start-btn">スタート</button>
+    </div>
+
+    <div id="settings-container">
+        <div id="close-btn">×</div>
+        <h2>カスタマイズ</h2>
+        
+        <div class="setting-group">
+            <label>丸のサイズ: <span id="size-label">80</span>%</label>
+            <input type="range" id="size-slider" min="10" max="100" value="80">
+        </div>
+
+        <div class="setting-group">
+            <label>丸の色 (RGB)</label>
+            <label style="color:#ff7675;">R: <span id="r-label">241</span></label>
+            <input type="range" id="r-slider" min="0" max="255" value="241">
+            <label style="color:#55efc4;">G: <span id="g-label">196</span></label>
+            <input type="range" id="g-slider" min="0" max="255" value="196">
+            <label style="color:#74b9ff;">B: <span id="b-label">15</span></label>
+            <input type="range" id="b-slider" min="0" max="255" value="15">
+            <div id="color-preview" class="color-preview" style="background-color: rgb(241, 196, 15);"></div>
+        </div>
+
+        <div class="setting-group">
+            <label>背景の色 (RGB)</label>
+            <label style="color:#ff7675;">R: <span id="bg-r-label">0</span></label>
+            <input type="range" id="bg-r-slider" min="0" max="255" value="0">
+            <label style="color:#55efc4;">G: <span id="bg-g-label">0</span></label>
+            <input type="range" id="bg-g-slider" min="0" max="255" value="0">
+            <label style="color:#74b9ff;">B: <span id="bg-b-label">0</span></label>
+            <input type="range" id="bg-b-slider" min="0" max="255" value="0">
+            <div id="bg-color-preview" class="color-preview" style="background-color: rgb(0, 0, 0);"></div>
+        </div>
+    </div>
+
+    <div id="history-container">
+        <h2>タイム</h2>
+        <ul id="history-list"></ul>
+    </div>
+
+    <div id="target-circle"></div>
+
+    <script>
+        const startBtn = document.getElementById('start-btn');
+        const targetCircle = document.getElementById('target-circle');
+        const message = document.getElementById('message');
+        const resultDisplay = document.getElementById('result');
+        const historyList = document.getElementById('history-list');
+        
+        // メニュー開閉用
+        const hamburgerBtn = document.getElementById('hamburger-btn');
+        const closeBtn = document.getElementById('close-btn');
+        const settingsContainer = document.getElementById('settings-container');
+
+        // 丸の設定用
+        const sizeSlider = document.getElementById('size-slider');
+        const sizeLabel = document.getElementById('size-label');
+        const rSlider = document.getElementById('r-slider');
+        const gSlider = document.getElementById('g-slider');
+        const bSlider = document.getElementById('b-slider');
+        const rLabel = document.getElementById('r-label');
+        const gLabel = document.getElementById('g-label');
+        const bLabel = document.getElementById('b-label');
+        const colorPreview = document.getElementById('color-preview');
+
+        // 背景の設定用
+        const bgRSlider = document.getElementById('bg-r-slider');
+        const bgGSlider = document.getElementById('bg-g-slider');
+        const bgBSlider = document.getElementById('bg-b-slider');
+        const bgRLabel = document.getElementById('bg-r-label');
+        const bgGLabel = document.getElementById('bg-g-label');
+        const bgBLabel = document.getElementById('bg-b-label');
+        const bgColorPreview = document.getElementById('bg-color-preview');
+
+        const MAX_TRIALS = 5;
+        let trialCount = 0;
+        let reactionTimes = [];
+        let startTime = 0;
+        let timeoutId = null;
+        let currentState = 'IDLE'; 
+
+        // --- イベントリスナー ---
+        startBtn.addEventListener('click', startGame);
+        document.addEventListener('pointerdown', handleScreenTap);
+
+        // ハンバーガーメニューの開閉
+        hamburgerBtn.addEventListener('click', () => {
+            settingsContainer.classList.add('open');
+        });
+        closeBtn.addEventListener('click', () => {
+            settingsContainer.classList.remove('open');
+        });
+
+        // スライダーの変更検知
+        [sizeSlider, rSlider, gSlider, bSlider, bgRSlider, bgGSlider, bgBSlider].forEach(slider => {
+            slider.addEventListener('input', updateSettings);
+        });
+
+        // --- 設定の更新処理 ---
+        function updateSettings() {
+            // 丸の更新
+            const size = sizeSlider.value;
+            sizeLabel.textContent = size;
+            targetCircle.style.width = `${size}vmin`;
+            targetCircle.style.height = `${size}vmin`;
+
+            const r = rSlider.value; const g = gSlider.value; const b = bSlider.value;
+            rLabel.textContent = r; gLabel.textContent = g; bLabel.textContent = b;
+            const newColor = `rgb(${r}, ${g}, ${b})`;
+            colorPreview.style.backgroundColor = newColor;
+            targetCircle.style.backgroundColor = newColor;
+
+            // 背景の更新
+            const bgR = bgRSlider.value; const bgG = bgGSlider.value; const bgB = bgBSlider.value;
+            bgRLabel.textContent = bgR; bgGLabel.textContent = bgG; bgBLabel.textContent = bgB;
+            const newBgColor = `rgb(${bgR}, ${bgG}, ${bgB})`;
+            bgColorPreview.style.backgroundColor = newBgColor;
+            document.body.style.backgroundColor = newBgColor;
+        }
+
+        // --- ゲーム処理 ---
+        function startGame() {
+            trialCount = 0;
+            reactionTimes = [];
+            startBtn.style.display = 'none';
+            resultDisplay.style.display = 'none';
+            
+            // ゲーム開始時にメニューが開いていたら閉じる
+            settingsContainer.classList.remove('open');
+            
+            historyList.innerHTML = '';
+            for(let i = 1; i <= MAX_TRIALS; i++) {
+                historyList.innerHTML += `<li id="trial-${i}">${i}回目: --- ms</li>`;
+            }
+            nextTrial();
+        }
+
+        function nextTrial() {
+            if (trialCount >= MAX_TRIALS) {
+                showResult();
+                return;
+            }
+            startCountdown();
+        }
+
+        function startCountdown() {
+            currentState = 'WAITING';
+            message.classList.remove('warning');
+            message.innerHTML = `第 ${trialCount + 1} 回 / 全 ${MAX_TRIALS} 回 : 準備...<br><span style="font-size:0.9rem; font-weight:normal;">(画面のどこをタッチしてもOK)</span>`;
+            
+            const randomDelay = Math.floor(Math.random() * 4000) + 3000;
+            timeoutId = setTimeout(showCircle, randomDelay);
+        }
+
+        function showCircle() {
+            if (currentState !== 'WAITING') return; 
+            
+            currentState = 'REACTING';
+            message.textContent = '今だ！！';
+            targetCircle.style.display = 'block';
+            startTime = performance.now(); 
+        }
+
+        function handleScreenTap(e) {
+            // ハンバーガーボタン、設定メニュー、スタートボタンのクリックはゲームのタップと見なさない
+            if (e.target.id === 'start-btn' || 
+                e.target.closest('#settings-container') || 
+                e.target.id === 'hamburger-btn') {
+                return;
+            }
+
+            if (currentState === 'WAITING') {
+                clearTimeout(timeoutId);
+                currentState = 'IDLE';
+                message.classList.add('warning');
+                message.textContent = '早すぎます！もう一度...';
+                
+                setTimeout(() => {
+                    if (trialCount < MAX_TRIALS) {
+                        startCountdown();
+                    }
+                }, 1500);
+
+            } else if (currentState === 'REACTING') {
+                const endTime = performance.now();
+                const reactionTime = Math.round(endTime - startTime);
+                reactionTimes.push(reactionTime);
+                
+                targetCircle.style.display = 'none';
+                currentState = 'IDLE';
+                
+                const listItem = document.getElementById(`trial-${trialCount + 1}`);
+                if(listItem) {
+                    listItem.textContent = `${trialCount + 1}回目: ${reactionTime} ms`;
+                }
+
+                trialCount++;
+                setTimeout(nextTrial, 500);
+            }
+        }
+
+        function showResult() {
+            currentState = 'IDLE';
+            targetCircle.style.display = 'none';
+            
+            const sum = reactionTimes.reduce((a, b) => a + b, 0);
+            const average = sum / MAX_TRIALS;
+            
+            message.classList.remove('warning');
+            message.innerHTML = 'テスト完了！';
+            
+            // 結果も中央に出す
+            resultDisplay.innerHTML = `平均反応速度<br><span class="score">${Math.round(average)}</span> ms`;
+            resultDisplay.style.display = 'block';
+            
+            startBtn.textContent = 'もう一度プレイ';
+            startBtn.style.display = 'inline-block';
+        }
+    </script>
+</body>
+</html>
