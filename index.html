@@ -248,38 +248,36 @@
         let timeoutId = null;
         let currentState = 'IDLE'; 
 
-        // 🌟 音声用のコンテキストを準備
         let audioCtx;
 
         function initAudio() {
             if (!audioCtx) {
                 audioCtx = new (window.AudioContext || window.webkitAudioContext)();
             }
-            // ブラウザの仕様で、ユーザー操作時にresumeしないと音が鳴らないことがあるため
             if (audioCtx.state === 'suspended') {
                 audioCtx.resume();
             }
         }
 
-        // 🌟 「ぶっ」という音を生成して鳴らす関数
+        // 🌟 控えめな音に変更
         function playErrorSound() {
             if (!audioCtx) return;
             const oscillator = audioCtx.createOscillator();
             const gainNode = audioCtx.createGain();
             
-            // 波形を「square（矩形波）」にして、低めの周波数（100Hz）にすると「ぶっ」というブザー音になります
-            oscillator.type = 'square';
+            // 波形を「sine（サイン波）」にして耳障りな電子音感を無くす
+            oscillator.type = 'sine';
             oscillator.frequency.setValueAtTime(100, audioCtx.currentTime);
             
-            // 音量調整（一瞬で消えるように）
-            gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
-            gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+            // 音量を激減（0.3 → 0.05）させ、非常に小さな「ボッ」という音にする
+            gainNode.gain.setValueAtTime(0.05, audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.1);
             
             oscillator.connect(gainNode);
             gainNode.connect(audioCtx.destination);
             
             oscillator.start();
-            oscillator.stop(audioCtx.currentTime + 0.1); // 0.1秒で音を止める
+            oscillator.stop(audioCtx.currentTime + 0.1); 
         }
 
         startBtn.addEventListener('click', startGame);
@@ -320,7 +318,7 @@
         }
 
         function startGame() {
-            initAudio(); // 🌟 ゲーム開始時にオーディオを有効化
+            initAudio(); 
 
             trialCount = 0;
             reactionTimes = [];
@@ -361,7 +359,7 @@
         }
 
         function handleScreenTap(e) {
-            initAudio(); // 🌟 念のためタップ時にもオーディオコンテキストを有効化
+            initAudio(); 
 
             if (e.target.id === 'start-btn' || 
                 e.target.closest('#settings-container') || 
@@ -370,12 +368,11 @@
             }
 
             if (currentState === 'WAITING') {
-                // 🌟 フライング処理：一瞬赤く光り、「ぶっ」と鳴らす
                 clearTimeout(timeoutId);
                 currentState = 'IDLE';
                 
-                playErrorSound(); // 音を鳴らす
-                document.body.classList.add('flash-error'); // 赤く光らせる
+                playErrorSound(); 
+                document.body.classList.add('flash-error'); 
                 
                 setTimeout(() => {
                     document.body.classList.remove('flash-error');
