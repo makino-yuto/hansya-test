@@ -19,7 +19,6 @@
             transition: background-color 0.1s;
         }
 
-        /* --- 究極に短いフライング時のエラー表現 --- */
         body::after {
             content: "";
             position: absolute;
@@ -51,7 +50,6 @@
 
         h1 { margin: 0; font-size: 2rem; }
 
-        /* --- 視覚・聴覚の切り替えスイッチ --- */
         #mode-switch {
             display: flex;
             justify-content: center;
@@ -107,7 +105,6 @@
         #result { font-size: 1.5rem; display: none; margin-bottom: 20px;}
         .score { font-size: 3.5rem; font-weight: bold; color: #f1c40f; text-shadow: 0 4px 8px rgba(0,0,0,0.9); }
 
-        /* --- 画面下部の説明テキスト --- */
         #bottom-ui {
             position: absolute;
             bottom: 10%;
@@ -115,7 +112,7 @@
             text-align: center;
             pointer-events: none;
             z-index: 10;
-            transition: opacity 0.3s; /* ふんわり消えるアニメーション */
+            transition: opacity 0.3s;
         }
         #instruction-text {
             font-size: 1.1rem;
@@ -274,7 +271,7 @@
         const resultDisplay = document.getElementById('result');
         const historyList = document.getElementById('history-list');
         const instructionText = document.getElementById('instruction-text');
-        const bottomUi = document.getElementById('bottom-ui'); // 🌟 追加
+        const bottomUi = document.getElementById('bottom-ui');
         
         const hamburgerBtn = document.getElementById('hamburger-btn');
         const settingsContainer = document.getElementById('settings-container');
@@ -372,7 +369,6 @@
             visualModeBtn.classList.toggle('active', mode === 'VISUAL');
             audioModeBtn.classList.toggle('active', mode === 'AUDIO');
             
-            // モード切り替え時は必ずテキストを表示する
             bottomUi.style.display = 'block'; 
 
             if (mode === 'VISUAL') {
@@ -438,7 +434,6 @@
             resultDisplay.style.display = 'none';
             targetCircle.style.display = 'none'; 
             
-            // 🌟 スタートしたら説明文を隠す
             bottomUi.style.display = 'none';
 
             settingsContainer.classList.remove('open');
@@ -538,7 +533,6 @@
             targetCircle.style.display = 'none'; 
             stopCueSound(); 
             
-            // 🌟 結果発表時に説明文を再表示
             bottomUi.style.display = 'block';
 
             const sum = reactionTimes.reduce((a, b) => a + b, 0);
@@ -553,3 +547,4 @@
     </script>
 </body>
 </html>
+
