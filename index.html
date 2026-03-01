@@ -1,18 +1,63 @@
 <!DOCTYPE html>
 <html lang="ja">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>反射神経テスト</title>
     <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
 
-    <div id="ui-container">
+    <div id="hamburger-btn">☰</div>
+
+    <div id="top-ui">
         <h1>反射神経テスト</h1>
-        <p id="message">「スタート」を押して準備</p>
-        <button id="start-btn">スタート</button>
+        <div id="mode-switch">
+            <button id="visual-mode-btn" class="mode-btn active">視覚</button>
+            <button id="audio-mode-btn" class="mode-btn">聴覚</button>
+        </div>
+    </div>
+
+    <div id="center-ui">
         <div id="result"></div>
+        <button id="start-btn">スタート</button>
+    </div>
+
+    <div id="bottom-ui">
+        <p id="instruction-text">円が出たら画面をクリック</p>
+    </div>
+
+    <div id="settings-container">
+        <h2>カスタマイズ</h2>
+
+        <div class="setting-group">
+            <label>丸のサイズ: <span id="size-label">80</span>%</label>
+            <input type="range" id="size-slider" min="10" max="100" value="80">
+        </div>
+
+        <div class="setting-group">
+            <label>丸の色 (RGB)</label>
+            <label style="color:#ff7675;">R: <span id="r-label">241</span></label>
+            <input type="range" id="r-slider" min="0" max="255" value="241">
+            <label style="color:#55efc4;">G: <span id="g-label">196</span></label>
+            <input type="range" id="g-slider" min="0" max="255" value="196">
+            <label style="color:#74b9ff;">B: <span id="b-label">15</span></label>
+            <input type="range" id="b-slider" min="0" max="255" value="15">
+            <div id="color-preview" class="color-preview" style="background-color: rgb(241, 196, 15);"></div>
+        </div>
+
+        <div class="setting-group">
+            <label>背景の色 (RGB)</label>
+            <label style="color:#ff7675;">R: <span id="bg-r-label">0</span></label>
+            <input type="range" id="bg-r-slider" min="0" max="255" value="0">
+            <label style="color:#55efc4;">G: <span id="bg-g-label">0</span></label>
+            <input type="range" id="bg-g-slider" min="0" max="255" value="0">
+            <label style="color:#74b9ff;">B: <span id="bg-b-label">0</span></label>
+            <input type="range" id="bg-b-slider" min="0" max="255" value="0">
+            <div id="bg-color-preview" class="color-preview" style="background-color: rgb(0, 0, 0);"></div>
+        </div>
     </div>
 
     <div id="history-container">
@@ -24,4 +69,5 @@
 
     <script src="script.js"></script>
 </body>
+
 </html>
