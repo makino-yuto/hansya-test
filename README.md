@@ -6,7 +6,7 @@
 自分自身の反応速度を気軽に計測・記録できるアプリとして開発しました。
 
 リンク:
-[Reflex Test](https://reflex.jinsei-makino.com/)
+[反射神経テスト](https://reflex.jinsei-makino.com/)
 
 ## Features
 
