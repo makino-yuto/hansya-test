@@ -5,7 +5,7 @@
 画面や音の変化に対してどれだけ素早く反応できるかを、シンプルな操作で測定できます。
 自分自身の反応速度を気軽に計測・記録できるアプリとして開発しました。
 
-Web Site:
+リンク:
 [Reflex Test](https://reflex.jinsei-makino.com/)
 
 ## Features
