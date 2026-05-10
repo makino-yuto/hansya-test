@@ -28,6 +28,9 @@
 
 ## Development
 
-```bash id="9g4b9m"
-git clone <repository-url>
+```bash
+git clone https://github.com/your-name/reflex-test.git
 ```
+
+クローン後、`index.html` をブラウザで開くことでローカル環境で実行できます。
+
