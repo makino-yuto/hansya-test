@@ -28,9 +28,8 @@
 
 ## Development
 
-```bash
-git clone https://github.com/your-name/reflex-test.git
+```bash id="q2r8sx"
+git clone https://github.com/makino-yuto/reflex.git
 ```
 
 クローン後、`index.html` をブラウザで開くことでローカル環境で実行できます。
-
